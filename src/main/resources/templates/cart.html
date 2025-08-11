@@ -87,8 +87,9 @@
 
     <!-- Кнопка "Купить" -->
     <!-- Кнопка "Купить" в cart.html -->
+    <!-- Кнопка "Купить" в cart.html -->
     <div class="actions">
-        <form th:action="@{/order/create}" method="post">
+        <form th:action="@{/orders/create}" method="post"> <!-- Путь теперь /orders/create -->
             <button type="submit" class="btn">Купить</button>
         </form>
     </div>

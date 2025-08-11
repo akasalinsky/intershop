@@ -1,34 +1,39 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-
+<html lang="ru" xmlns:th="http://www.thymeleaf.org"> <!-- Исправлена кодировка языка -->
 <head>
+    <meta charset="UTF-8"> <!-- Добавлен meta-тег для корректной кодировки -->
     <title>Заказы</title>
 </head>
-
 <body>
-<a href="/cart/items" style="float:right;">
-    <b>КОРЗИНА &cudarrr;</b>
+<a href="/cart" style="float:right;"> <!-- Исправлены пути -->
+    <b>КОРЗИНА &rarr;</b>
 </a>
-<a href="/main/items" style="float:right;">
-    <b>ГЛАВНАЯ &cudarrr;</b>
+<a href="/products" style="float:right;"> <!-- Исправлены пути -->
+    <b>ГЛАВНАЯ &rarr;</b>
 </a>
 <table style="width:70%;margin-left:auto;margin-right:auto;">
     <tr th:each="order : ${orders}">
         <td>
             <h2>
-                <a th:text="${'Заказ №'+order.id()}" th:href="${'/orders/'+order.id()}"></a>
+                <!-- Убедитесь, что тут НЕТ order.id() -->
+                <a th:text="${'Заказ №'+order.id}" th:href="${'/orders/'+order.id}"></a>
             </h2>
             <table>
-                <tr th:each="item : ${order.items()}">
-                    <td th:text="${item.getTitle()+' ('+item.getCount()+' шт.) '+(item.getPrice()*item.getCount())+' руб.'}"></td>
+                <tr th:each="item : ${order.items}">
+                    <!-- Предполагается, что OrderItem имеет методы getProduct(), getQuantity(), getPrice() -->
+                    <!-- item.getTitle(), item.getCount(), item.getPrice() - это методы Product или OrderItem? -->
+                    <!-- Если item - это OrderItem, и у него есть getProduct(), то нужно: -->
+                    <td th:text="${item.product.name+' ('+item.quantity+' шт.) '+(item.price * item.quantity)+' руб.'}"></td>
+                    <!-- Или, если getTotalPrice() есть в OrderItem: -->
+                    <!-- <td th:text="${item.product.name+' ('+item.quantity+' шт.) '+item.totalPrice+' руб.'}"></td> -->
                 </tr>
             </table>
             <p>
-                <b th:text="${'Сумма: '+order.totalSum()}+' руб.'"></b>
+                <!-- ИСПРАВЛЕНО: totalSum -> totalPrice -->
+                <b th:text="${'Сумма: '+order.totalPrice}+' руб.'"></b>
             </p>
         </td>
     </tr>
 </table>
 </body>
-
 </html>

@@ -15,8 +15,9 @@ public class OrderService {
     private OrderRepository orderRepository;
 
     public Order createOrder(Cart cart, HttpSession session) {
-        if (cart.getItems().isEmpty()) {
-            return null; // Нельзя создать заказ из пустой корзины
+        // Проверка внутри сервиса
+        if (cart == null || cart.getItems().isEmpty()) {
+            return null; // Нельзя создать заказ из пустой или несуществующей корзины
         }
 
         Order order = new Order(cart);
