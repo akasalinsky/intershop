@@ -1,29 +1,30 @@
+// src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Order;
+import com.example.demo.repository.OrderRepository;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class OrderService {
-    private List<Order> orders = new ArrayList<>();
-    private AtomicLong idGenerator = new AtomicLong(1);
 
-    public Order createOrder(Cart cart) {
-        Long id = idGenerator.getAndIncrement();
-        List<com.example.demo.model.CartItem> items = new ArrayList<>(cart.getItems());
-        BigDecimal totalPrice = cart.getTotalPrice();
-        Order order = new Order(id, items, totalPrice);
-        orders.add(order);
-        return order;
-    }
+    @Autowired
+    private OrderRepository orderRepository;
 
-    public List<Order> getAllOrders() {
-        return orders;
+    public Order createOrder(Cart cart, HttpSession session) {
+        if (cart.getItems().isEmpty()) {
+            return null; // Нельзя создать заказ из пустой корзины
+        }
+
+        Order order = new Order(cart);
+        Order savedOrder = orderRepository.save(order);
+
+        // Очищаем корзину после оформления заказа
+        session.removeAttribute("cart");
+
+        return savedOrder;
     }
 }

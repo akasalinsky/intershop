@@ -71,20 +71,32 @@
         <p th:text="${product.description}">Описание</p>
         <p><b th:text="${product.price} + ' руб.'">0.00 руб.</b></p>
 
+        <!-- Внутри th:each="product : ${products}" -->
         <div class="controls">
+            <!-- Кнопка "-" -->
             <form th:action="@{/cart/update/{id}(id=${product.id})}" method="post" style="display: inline;">
-                <button type="submit" name="quantity" th:value="${cartItemQuantity.get(product.id) - 1 ?: 0}" th:disabled="${cartItemQuantity.get(product.id) le 1}">-</button>
-            </form>
-            <span th:text="${cartItemQuantity.get(product.id)} ?: 0">0</span>
-            <form th:action="@{/cart/update/{id}(id=${product.id})}" method="post" style="display: inline;">
-                <button type="submit" name="quantity" th:value="${cartItemQuantity.get(product.id) + 1}">+</button>
+        <span th:with="currentQty=${cartItemQuantity.get(product.id) ?: 0}">
+            <button type="submit" name="quantity" th:value="${currentQty - 1}" th:disabled="${currentQty le 0}">-</button>
+        </span>
             </form>
 
+            <!-- Отображение количества -->
+            <span th:text="${cartItemQuantity.get(product.id) ?: 0}">0</span>
+
+            <!-- Кнопка "+" -->
+            <form th:action="@{/cart/update/{id}(id=${product.id})}" method="post" style="display: inline;">
+        <span th:with="currentQty=${cartItemQuantity.get(product.id) ?: 0}">
+            <button type="submit" name="quantity" th:value="${currentQty + 1}">+</button>
+        </span>
+            </form>
+
+            <!-- Кнопка "В корзину" -->
             <form th:action="@{/cart/add/{id}(id=${product.id})}" method="post" style="display: inline;">
                 <button type="submit" class="btn" th:if="${cartItemQuantity.get(product.id) == null or cartItemQuantity.get(product.id) == 0}">В корзину</button>
             </form>
 
-            <form th:action="@{/cart/remove/{id}(id=${product.id})}" method="post" style="display: inline;" th:if="${cartItemQuantity.get(product.id) gt 0}">
+            <!-- Кнопка "Удалить" (крестик) -->
+            <form th:action="@{/cart/remove/{id}(id=${product.id})}" method="post" style="display: inline;" th:if="${cartItemQuantity.get(product.id) != null and cartItemQuantity.get(product.id) > 0}">
                 <button type="submit" class="btn">&times;</button>
             </form>
         </div>

@@ -1,61 +1,97 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
-
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta charset="UTF-8">
     <title>Корзина товаров</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn { padding: 5px 10px; margin: 0 2px; text-decoration: none; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        .btn:hover { background-color: #0056b3; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
+        .total { margin-top: 20px; font-size: 1.2em; font-weight: bold; text-align: right; }
+        .actions { margin-top: 20px; text-align: right; }
+        .nav { text-align: right; margin-bottom: 20px; }
+        .nav a { margin-left: 15px; text-decoration: none; font-weight: bold; }
+    </style>
 </head>
-
 <body>
-<a href="/orders" style="float:right;">
-    <b>ЗАКАЗЫ &cudarrr;</b>
-</a>
-<a href="/main/items" style="float:right;">
-    <b>ГЛАВНАЯ &cudarrr;</b>
-</a>
-<table style="width:70%;margin-left:auto;margin-right:auto;">
-    <tr th:each="item : ${items}">
-        <td>
-            <table>
-                <tr>
-                    <td>
-                        <img width="300" height="300" th:src="${'http://localhost:8080/'+item.getImgPath()}">
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <b th:text="${item.getTitle()}"></b>
-                    </td>
-                    <td>
-                        <b th:text="${item.getPrice()}+' руб.'"></b>
-                    </td>
-                </tr>
-                <tr><td th:text="${item.getDescription()}"></td></tr>
-                <tr>
-                    <td>
-                        <form th:action="${'/cart/items/'+item.getId()}" method="post">
-                            <button name="action" value="minus">-</button>
-                            <span th:text="${item.getCount()}"></span>
-                            <button name="action" value="plus">+</button>
-                            <button name="action" value="delete" style="float:right;">&cross;</button>
-                        </form>
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-    <tr>
-        <td style="text-align:right">
-            <b th:text="'Итого: '+${total}+' руб.'"></b>
-        </td>
-    </tr>
-    <tr>
-        <td style="text-align:right">
-            <form action="/buy" method="post" th:if="${!empty}">
-                <button>Купить</button>
-            </form>
-        </td>
-    </tr>
-</table>
-</body>
+<!-- Навигация -->
+<div class="nav">
+    <a href="/orders"><b>ЗАКАЗЫ &rarr;</b></a>
+    <a href="/products"><b>ГЛАВНАЯ &rarr;</b></a> <!-- Исправлен путь -->
+</div>
 
+<h1 style="text-align: center;">Ваша корзина</h1>
+
+<!-- Сообщение, если корзина пуста -->
+<div th:if="${#lists.isEmpty(cart.items)}"> <!-- Проверяем, пуст ли список items в объекте cart -->
+    <p style="text-align: center;">Корзина пуста.</p>
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="/products" class="btn">Перейти к покупкам</a> <!-- Исправлен путь -->
+    </div>
+</div>
+
+<!-- Содержимое корзины -->
+<div th:if="${not #lists.isEmpty(cart.items)}"> <!-- Показываем, если есть товары -->
+    <table>
+        <thead>
+        <tr>
+            <th>Товар</th>
+            <th>Цена за единицу</th>
+            <th>Количество</th>
+            <th>Итого</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${cart.items}"> <!-- Итерируемся по cart.items -->
+            <td>
+                <!-- Предполагается, что у CartItem есть метод getProduct(), возвращающий Product -->
+                <img th:src="${item.product.imageUrl}" alt="Фото товара" width="100" th:if="${item.product.imageUrl}">
+                <span th:text="${item.product.name}">Название товара</span> <!-- Получаем название через product -->
+            </td>
+            <td>
+                <span th:text="${item.product.price}">0.00</span> руб. <!-- Цена за единицу -->
+            </td>
+            <td>
+                <!-- Форма для изменения количества -->
+                <form th:action="@{/cart/update/{id}(id=${item.product.id})}" method="post" style="display: inline;"> <!-- Исправлен путь -->
+                    <button type="submit" name="quantity" th:value="${item.quantity - 1}" th:disabled="${item.quantity le 1}">-</button>
+                </form>
+                <span th:text="${item.quantity}">0</span> <!-- Отображаем количество -->
+                <form th:action="@{/cart/update/{id}(id=${item.product.id})}" method="post" style="display: inline;"> <!-- Исправлен путь -->
+                    <button type="submit" name="quantity" th:value="${item.quantity + 1}">+</button>
+                </form>
+            </td>
+            <td>
+                <span th:text="${item.totalPrice}">0.00</span> руб. <!-- Итоговая цена за позицию -->
+            </td>
+            <td>
+                <!-- Форма для удаления товара -->
+                <form th:action="@{/cart/remove/{id}(id=${item.product.id})}" method="post"> <!-- Исправлен путь -->
+                    <button type="submit" class="btn btn-danger">&times;</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <!-- Итого -->
+    <div class="total">
+        Общая сумма: <span th:text="${cart.totalPrice}">0.00</span> руб. <!-- Общая сумма из корзины -->
+    </div>
+
+    <!-- Кнопка "Купить" -->
+    <!-- Кнопка "Купить" в cart.html -->
+    <div class="actions">
+        <form th:action="@{/order/create}" method="post">
+            <button type="submit" class="btn">Купить</button>
+        </form>
+    </div>
+</div>
+</body>
 </html>
