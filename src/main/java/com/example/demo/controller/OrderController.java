@@ -10,6 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -55,12 +59,27 @@ public class OrderController {
         return "order"; // order.html
     }
 
-    // Список всех заказов
-    @GetMapping // Отвечает за /orders
-    public String listOrders(Model model) {
-        // Получить все заказы из репозитория
-        List<Order> orders = orderRepository.findAll();
-        model.addAttribute("orders", orders);
-        return "orders"; // orders.html
+
+    @GetMapping
+    public String listOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        // Ограничиваем размер страницы для безопасности и производительности
+        size = Math.max(1, Math.min(size, 50));
+        page = Math.max(0, page);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<Order> orderPage = orderRepository.findAll(pageable);
+
+        model.addAttribute("orders", orderPage.getContent());
+        model.addAttribute("currentPage", orderPage.getNumber());
+        model.addAttribute("totalPages", orderPage.getTotalPages());
+        model.addAttribute("totalItems", orderPage.getTotalElements());
+        model.addAttribute("pageSize", size);
+
+        return "orders";
     }
 }
