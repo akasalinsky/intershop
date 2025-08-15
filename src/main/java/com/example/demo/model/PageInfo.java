@@ -13,7 +13,6 @@ public class PageInfo {
         this.totalElements = totalElements;
     }
 
-    // Геттеры
     public int getPageSize() { return pageSize; }
     public int getCurrentPage() { return currentPage; }
     public int getTotalPages() { return totalPages; }

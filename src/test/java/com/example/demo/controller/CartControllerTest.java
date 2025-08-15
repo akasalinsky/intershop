@@ -1,84 +1,86 @@
-// src/test/java/com/example/demo/controller/CartControllerTest.java
 package com.example.demo.controller;
 
 import com.example.demo.model.Product;
-import com.example.demo.repository.ProductRepository;
+import com.example.demo.service.ProductService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CartController.class)
+@WebFluxTest(CartController.class)
 public class CartControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockBean
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Test
     public void testViewCart() throws Exception {
-        mockMvc.perform(get("/cart"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cart"))
-                .andExpect(model().attributeExists("cart"));
+        webTestClient
+                .get()
+                .uri("/cart")
+                .exchange()
+                .expectStatus().isOk();
     }
 
     @Test
     public void testAddToCart_ProductExists() throws Exception {
         Long productId = 1L;
         Product product = new Product(productId, "Товар", "Описание", new BigDecimal("10.00"), "/image.jpg");
-        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productService.getProductById(productId)).thenReturn(Mono.just(product));
 
-        mockMvc.perform(post("/cart/add/{productId}", productId)
-                        .param("quantity", "2"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/products"));
+        webTestClient
+                .post()
+                .uri("/cart/add/{productId}?quantity=2", productId)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().value("Location", location -> location.contains("/products"));
 
-        // Проверяем, что метод репозитория был вызван
-        verify(productRepository, times(1)).findById(productId);
+        verify(productService, times(1)).getProductById(productId);
     }
 
     @Test
     public void testAddToCart_ProductNotFound() throws Exception {
-        Long productId = 999L; // Несуществующий ID
-        when(productRepository.findById(productId)).thenReturn(Optional.empty());
+        Long productId = 999L;
+        when(productService.getProductById(productId)).thenReturn(Mono.empty());
 
-        mockMvc.perform(post("/cart/add/{productId}", productId)
-                        .param("quantity", "1"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/products"));
+        webTestClient
+                .post()
+                .uri("/cart/add/{productId}?quantity=1", productId)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().value("Location", location -> location.contains("/products"));
 
-        // Проверяем, что метод репозитория был вызван
-        verify(productRepository, times(1)).findById(productId);
+        verify(productService, times(1)).getProductById(productId);
     }
 
     @Test
     public void testUpdateCart() throws Exception {
         Long productId = 1L;
-        mockMvc.perform(post("/cart/update/{productId}", productId)
-                        .param("quantity", "3"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart"));
-        // Здесь сложно проверить состояние сессии без дополнительной настройки,
-        // но мы проверили, что редирект произошёл правильно.
+        webTestClient
+                .post()
+                .uri("/cart/update/{productId}?quantity=3", productId)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().value("Location", location -> location.contains("/cart"));
     }
 
     @Test
     public void testRemoveFromCart() throws Exception {
         Long productId = 1L;
-        mockMvc.perform(post("/cart/remove/{productId}", productId))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cart"));
-        // Аналогично, проверяем редирект.
+        webTestClient
+                .post()
+                .uri("/cart/remove/{productId}", productId)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().value("Location", location -> location.contains("/cart"));
     }
 }

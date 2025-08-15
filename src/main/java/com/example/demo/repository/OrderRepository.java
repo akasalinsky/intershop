@@ -1,11 +1,12 @@
-// src/main/java/com/example/demo/repository/OrderRepository.java
 package com.example.demo.repository;
 
 import com.example.demo.model.Order;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.r2dbc.repository.R2dbcRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
-    // Дополнительные методы поиска можно добавить позже
+public interface OrderRepository extends R2dbcRepository<Order, Long> {
+
 }

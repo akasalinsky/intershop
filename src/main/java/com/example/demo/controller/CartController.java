@@ -3,70 +3,93 @@ package com.example.demo.controller;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Product;
-import com.example.demo.repository.ProductRepository;
-import jakarta.servlet.http.HttpSession;
+import com.example.demo.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.WebSession;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/cart")
 public class CartController {
 
     @Autowired
-    private ProductRepository productRepository;
+    private ProductService productService;
 
-    // Просмотр корзины
     @GetMapping
-    public String viewCart(HttpSession session, Model model) {
-        Cart cart = getCart(session);
-        model.addAttribute("cart", cart);
-        return "cart"; // имя файла cart.html
+    public Mono<String> viewCart(WebSession session, Model model) {
+
+        return Mono.justOrEmpty(session.getAttribute("cart"))
+                .cast(Cart.class)
+                .defaultIfEmpty(new Cart()) // Если корзины нет, создаем новую
+                .doOnNext(cart -> model.addAttribute("cart", cart))
+                .then(Mono.just("cart")); // Возвращаем имя шаблона
     }
 
-    // Добавление товара в корзину
     @PostMapping("/add/{productId}")
-    public String addToCart(@PathVariable Long productId,
-                            @RequestParam(defaultValue = "1") int quantity,
-                            HttpSession session) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product != null && quantity > 0) {
-            Cart cart = getCart(session);
-            cart.addItem(product, quantity);
-            session.setAttribute("cart", cart); // Обновляем корзину в сессии
+    public Mono<String> addToCart(@PathVariable Long productId,
+                                  @RequestParam(defaultValue = "1") int quantity,
+                                  WebSession session) {
+        if (quantity <= 0) {
+            return Mono.just("redirect:/products");
         }
-        // Перенаправляем обратно на главную или на страницу товара
-        return "redirect:/products";
-    }
 
-    // Обновление количества товара в корзине
-    @PostMapping("/update/{productId}")
-    public String updateCart(@PathVariable Long productId,
-                             @RequestParam int quantity,
-                             HttpSession session) {
-        Cart cart = getCart(session);
-        cart.updateItemQuantity(productId, quantity);
-        session.setAttribute("cart", cart); // Обновляем корзину в сессии
-        return "redirect:/cart";
-    }
-
-    // Удаление товара из корзины
-    @PostMapping("/remove/{productId}")
-    public String removeFromCart(@PathVariable Long productId, HttpSession session) {
-        Cart cart = getCart(session);
-        cart.removeItem(productId);
-        session.setAttribute("cart", cart); // Обновляем корзину в сессии
-        return "redirect:/cart";
-    }
-
-    // Вспомогательный метод для получения корзины из сессии
-    private Cart getCart(HttpSession session) {
-        Cart cart = (Cart) session.getAttribute("cart");
-        if (cart == null) {
+        Object cartObject = session.getAttribute("cart");
+        Cart cart;
+        if (cartObject instanceof Cart) {
+            cart = (Cart) cartObject;
+        } else {
             cart = new Cart();
-            session.setAttribute("cart", cart);
+            session.getAttributes().put("cart", cart);
         }
-        return cart;
+
+        return productService.getProductById(productId)
+                .switchIfEmpty(Mono.fromRunnable(() -> {
+                    System.out.println("Product not found with id: " + productId);
+                }))
+                .doOnNext(product -> {
+
+                    cart.addItem(product, quantity);
+                    session.getAttributes().put("cart", cart);
+                })
+                .then(Mono.just("redirect:/products"));
+    }
+
+    @PostMapping("/update/{productId}")
+    public Mono<String> updateCart(@PathVariable Long productId,
+                                   @RequestParam int quantity,
+                                   WebSession session) {
+        Object cartObject = session.getAttribute("cart");
+        Cart cart;
+        if (cartObject instanceof Cart) {
+            cart = (Cart) cartObject;
+        } else {
+            cart = new Cart();
+            session.getAttributes().put("cart", cart);
+        }
+
+        cart.updateItemQuantity(productId, quantity);
+        session.getAttributes().put("cart", cart);
+
+        return Mono.just("redirect:/cart");
+    }
+
+    @PostMapping("/remove/{productId}")
+    public Mono<String> removeFromCart(@PathVariable Long productId, WebSession session) {
+        Object cartObject = session.getAttribute("cart");
+        Cart cart;
+        if (cartObject instanceof Cart) {
+            cart = (Cart) cartObject;
+        } else {
+            cart = new Cart();
+            session.getAttributes().put("cart", cart);
+        }
+
+        cart.removeItem(productId);
+        session.getAttributes().put("cart", cart);
+
+        return Mono.just("redirect:/cart");
     }
 }

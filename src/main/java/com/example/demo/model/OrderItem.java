@@ -1,45 +1,42 @@
 // src/main/java/com/example/demo/model/OrderItem.java
 package com.example.demo.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 
-@Entity
+@Table("order_item")
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id")
-    private Order order;
+    @Column("order_id")
+    private Long orderId;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+    @Column("product_id")
+    private Long productId;
 
     private int quantity;
-    private BigDecimal price; // Цена на момент покупки
+    private BigDecimal price;
 
-    // Конструкторы
     public OrderItem() {}
 
     public OrderItem(Product product, int quantity) {
-        this.product = product;
+        this.productId = product.getId();
         this.quantity = quantity;
         this.price = product.getPrice();
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public Order getOrder() { return order; }
-    public void setOrder(Order order) { this.order = order; }
+    public Long getOrderId() { return orderId; }
+    public void setOrderId(Long orderId) { this.orderId = orderId; }
 
-    public Product getProduct() { return product; }
-    public void setProduct(Product product) { this.product = product; }
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
@@ -52,5 +49,19 @@ public class OrderItem {
             return price.multiply(BigDecimal.valueOf(quantity));
         }
         return BigDecimal.ZERO;
+    }
+
+    public void setOrder(Order order) {
+        if (order != null) {
+            this.orderId = order.getId();
+        } else {
+            this.orderId = null;
+        }
+    }
+
+    public void setProduct(Product product) {
+        if (product != null) {
+            this.productId = product.getId();
+        }
     }
 }

@@ -1,9 +1,7 @@
-// src/main/java/com/example/demo/model/CartItem.java
 package com.example.demo.model;
 
 import java.math.BigDecimal;
 
-// Если CartItem уже существует, убедись, что он выглядит примерно так
 public class CartItem {
     private Product product;
     private int quantity;
