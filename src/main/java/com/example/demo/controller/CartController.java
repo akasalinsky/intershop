@@ -23,9 +23,9 @@ public class CartController {
 
         return Mono.justOrEmpty(session.getAttribute("cart"))
                 .cast(Cart.class)
-                .defaultIfEmpty(new Cart()) // Если корзины нет, создаем новую
+                .defaultIfEmpty(new Cart())
                 .doOnNext(cart -> model.addAttribute("cart", cart))
-                .then(Mono.just("cart")); // Возвращаем имя шаблона
+                .then(Mono.just("cart"));
     }
 
     @PostMapping("/add/{productId}")

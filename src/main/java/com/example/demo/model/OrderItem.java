@@ -1,4 +1,3 @@
-// src/main/java/com/example/demo/model/OrderItem.java
 package com.example.demo.model;
 
 import org.springframework.data.annotation.Id;
