@@ -1,27 +1,26 @@
-// src/main/java/com/example/demo/model/Order.java
 package com.example.demo.model;
 
-import jakarta.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Entity
-@Table(name = "orders") // "order" зарезервировано в SQL
+@Table("orders")
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderItem> items = new ArrayList<>();
-
     private BigDecimal totalPrice;
+
+    @Column("created_at")
     private LocalDateTime createdAt;
 
-    // Конструкторы
+    private List<OrderItem> items = new ArrayList<>();
+
     public Order() {
         this.createdAt = LocalDateTime.now();
     }
@@ -32,12 +31,12 @@ public class Order {
 
         for (CartItem cartItem : cart.getItems()) {
             OrderItem orderItem = new OrderItem(cartItem.getProduct(), cartItem.getQuantity());
-            orderItem.setOrder(this); // Устанавливаем связь
+            orderItem.setPrice(cartItem.getProduct().getPrice());
+            orderItem.setOrder(this);
             this.items.add(orderItem);
         }
     }
 
-    // Геттеры и сеттеры
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

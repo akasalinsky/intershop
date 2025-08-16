@@ -1,12 +1,11 @@
-// src/main/java/com/example/demo/service/OrderService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Cart;
 import com.example.demo.model.Order;
 import com.example.demo.repository.OrderRepository;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 @Service
 public class OrderService {
@@ -14,18 +13,12 @@ public class OrderService {
     @Autowired
     private OrderRepository orderRepository;
 
-    public Order createOrder(Cart cart, HttpSession session) {
-        // Проверка внутри сервиса
+    public Mono<Order> createOrder(Cart cart) {
         if (cart == null || cart.getItems().isEmpty()) {
-            return null; // Нельзя создать заказ из пустой или несуществующей корзины
+            return Mono.error(new IllegalArgumentException("Cart is null or empty"));
         }
 
         Order order = new Order(cart);
-        Order savedOrder = orderRepository.save(order);
-
-        // Очищаем корзину после оформления заказа
-        session.removeAttribute("cart");
-
-        return savedOrder;
+        return orderRepository.save(order);
     }
 }

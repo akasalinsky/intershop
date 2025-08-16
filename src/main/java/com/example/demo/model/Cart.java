@@ -1,4 +1,3 @@
-// src/main/java/com/example/demo/model/Cart.java
 package com.example.demo.model;
 
 import java.math.BigDecimal;
@@ -6,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Если Cart уже существует, убедись, что он выглядит примерно так
 public class Cart {
     private List<CartItem> items = new ArrayList<>();
 
@@ -15,17 +13,14 @@ public class Cart {
     }
 
     public void addItem(Product product, int quantity) {
-        // Проверяем, есть ли уже такой товар в корзине
         Optional<CartItem> existingItem = items.stream()
                 .filter(item -> item.getProduct().getId().equals(product.getId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
-            // Если есть, увеличиваем количество
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + quantity);
         } else {
-            // Если нет, добавляем новый элемент
             items.add(new CartItem(product, quantity));
         }
     }

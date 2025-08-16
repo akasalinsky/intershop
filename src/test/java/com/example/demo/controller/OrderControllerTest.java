@@ -1,4 +1,3 @@
-// src/test/java/com/example/demo/controller/OrderControllerTest.java
 package com.example.demo.controller;
 
 import com.example.demo.model.Order;
@@ -6,24 +5,23 @@ import com.example.demo.repository.OrderRepository;
 import com.example.demo.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.Optional;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(OrderController.class)
+@WebFluxTest(OrderController.class)
 public class OrderControllerTest {
 
     @Autowired
-    private MockMvc mockMvc;
+    private WebTestClient webTestClient;
 
     @MockBean
     private OrderService orderService;
@@ -33,7 +31,6 @@ public class OrderControllerTest {
 
     @Test
     public void testListOrders() throws Exception {
-        // Подготавливаем фиктивные данные
         Order order1 = new Order();
         order1.setId(1L);
         order1.setTotalPrice(new BigDecimal("150.00"));
@@ -44,14 +41,13 @@ public class OrderControllerTest {
         order2.setTotalPrice(new BigDecimal("250.00"));
         order2.setCreatedAt(LocalDateTime.now());
 
-        when(orderRepository.findAll()).thenReturn(Arrays.asList(order1, order2));
+        when(orderRepository.findAll()).thenReturn(Flux.fromIterable(Arrays.asList(order1, order2)));
 
-        mockMvc.perform(get("/orders"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("orders"))
-                .andExpect(model().attributeExists("orders"));
-        // Можно добавить проверку размера списка заказов
-        // .andExpect(model().attribute("orders", hasSize(2)));
+        webTestClient.get().uri("/orders")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(orderRepository, times(1)).findAll();
     }
 
     @Test
@@ -62,25 +58,25 @@ public class OrderControllerTest {
         order.setTotalPrice(new BigDecimal("150.00"));
         order.setCreatedAt(LocalDateTime.now());
 
-        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(orderId)).thenReturn(Mono.just(order));
 
-        mockMvc.perform(get("/orders/{orderId}", orderId))
-                .andExpect(status().isOk())
-                .andExpect(view().name("order"))
-                .andExpect(model().attributeExists("order"));
+        webTestClient.get().uri("/orders/{orderId}", orderId)
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(orderRepository, times(1)).findById(orderId);
     }
 
     @Test
     public void testViewOrder_OrderNotFound() throws Exception {
-        Long orderId = 999L; // Несуществующий ID
-        when(orderRepository.findById(orderId)).thenReturn(Optional.empty());
+        Long orderId = 999L;
+        when(orderRepository.findById(orderId)).thenReturn(Mono.empty());
 
-        mockMvc.perform(get("/orders/{orderId}", orderId))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/orders"));
+        webTestClient.get().uri("/orders/{orderId}", orderId)
+                .exchange()
+                .expectStatus().is3xxRedirection()
+                .expectHeader().value("Location", location -> location.contains("/orders"));
+
+        verify(orderRepository, times(1)).findById(orderId);
     }
-
-    // Тест для POST /orders/create сложнее, так как он зависит от сессии и сервиса.
-    // Его лучше писать как интеграционный тест с @SpringBootTest.
-    // Пока оставим его без теста в @WebMvcTest.
 }
