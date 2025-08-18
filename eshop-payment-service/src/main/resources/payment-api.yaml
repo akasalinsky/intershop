@@ -1,0 +1,100 @@
+openapi: 3.0.3
+info:
+  title: Payment Service API
+  description: API for processing payments in the Eshop application
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8081
+    description: Development server
+
+paths:
+  /balance:
+    get:
+      summary: Get user balance
+      operationId: getBalance
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '500':
+          description: Internal server error
+        '503':
+          description: Service unavailable
+  /pay:
+    post:
+      summary: Process payment
+      operationId: processPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequest'
+      responses:
+        '200':
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '400':
+          description: Bad request (e.g., insufficient funds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '402':
+          description: Payment required (alternative for insufficient funds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentResponse'
+        '500':
+          description: Internal server error
+        '503':
+          description: Service unavailable
+
+components:
+  schemas:
+    Balance:
+      type: object
+      properties:
+        amount:
+          type: number
+          format: decimal
+          example: 1500.75
+      required:
+        - amount
+
+    PaymentRequest:
+      type: object
+      properties:
+        orderId:
+          type: integer
+          format: int64
+          example: 12345
+        amount:
+          type: number
+          format: decimal
+          example: 999.99
+      required:
+        - orderId
+        - amount
+
+    PaymentResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [SUCCESS, INSUFFICIENT_FUNDS, ERROR]
+          example: SUCCESS
+        message:
+          type: string
+          example: "Payment processed successfully"
+      required:
+        - status
+        - message
