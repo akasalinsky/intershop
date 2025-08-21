@@ -1,10 +1,9 @@
-// src/main/java/com/example/demo/controller/CartController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.Cart;
-import com.example.demo.model.Product;
 import com.example.demo.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -18,16 +17,19 @@ public class CartController {
     @Autowired
     private ProductService productService;
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping
     public Mono<String> viewCart(WebSession session, Model model) {
-
-        return Mono.justOrEmpty(session.getAttribute("cart"))
-                .cast(Cart.class)
-                .defaultIfEmpty(new Cart())
-                .doOnNext(cart -> model.addAttribute("cart", cart))
-                .then(Mono.just("cart"));
+        Cart cart = session.getAttributeOrDefault("cart", new Cart());
+        if (!(cart instanceof Cart)) {
+            cart = new Cart();
+            session.getAttributes().put("cart", cart);
+        }
+        model.addAttribute("cart", cart);
+        return Mono.just("cart");
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/add/{productId}")
     public Mono<String> addToCart(@PathVariable Long productId,
                                   @RequestParam(defaultValue = "1") int quantity,
@@ -36,13 +38,14 @@ public class CartController {
             return Mono.just("redirect:/products");
         }
 
+        // Создаем final переменную для использования в лямбде
+        final Cart finalCart;
         Object cartObject = session.getAttribute("cart");
-        Cart cart;
         if (cartObject instanceof Cart) {
-            cart = (Cart) cartObject;
+            finalCart = (Cart) cartObject;
         } else {
-            cart = new Cart();
-            session.getAttributes().put("cart", cart);
+            finalCart = new Cart();
+            session.getAttributes().put("cart", finalCart);
         }
 
         return productService.getProductById(productId)
@@ -50,46 +53,52 @@ public class CartController {
                     System.out.println("Product not found with id: " + productId);
                 }))
                 .doOnNext(product -> {
-
-                    cart.addItem(product, quantity);
-                    session.getAttributes().put("cart", cart);
+                    // Используем final переменную
+                    finalCart.addItem(product, quantity);
+                    session.getAttributes().put("cart", finalCart);
                 })
                 .then(Mono.just("redirect:/products"));
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/update/{productId}")
     public Mono<String> updateCart(@PathVariable Long productId,
                                    @RequestParam int quantity,
                                    WebSession session) {
+        // Используем final переменную
+        final Cart finalCart;
         Object cartObject = session.getAttribute("cart");
-        Cart cart;
         if (cartObject instanceof Cart) {
-            cart = (Cart) cartObject;
+            finalCart = (Cart) cartObject;
         } else {
-            cart = new Cart();
-            session.getAttributes().put("cart", cart);
+            finalCart = new Cart();
+            session.getAttributes().put("cart", finalCart);
         }
 
-        cart.updateItemQuantity(productId, quantity);
-        session.getAttributes().put("cart", cart);
+        finalCart.updateItemQuantity(productId, quantity);
+        session.getAttributes().put("cart", finalCart);
 
         return Mono.just("redirect:/cart");
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/remove/{productId}")
     public Mono<String> removeFromCart(@PathVariable Long productId, WebSession session) {
+        // Используем final переменную
+        final Cart finalCart;
         Object cartObject = session.getAttribute("cart");
-        Cart cart;
         if (cartObject instanceof Cart) {
-            cart = (Cart) cartObject;
+            finalCart = (Cart) cartObject;
         } else {
-            cart = new Cart();
-            session.getAttributes().put("cart", cart);
+            finalCart = new Cart();
+            session.getAttributes().put("cart", finalCart);
         }
 
-        cart.removeItem(productId);
-        session.getAttributes().put("cart", cart);
+        finalCart.removeItem(productId);
+        session.getAttributes().put("cart", finalCart);
 
         return Mono.just("redirect:/cart");
     }
+
+
 }
