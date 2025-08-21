@@ -55,6 +55,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.13.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-test</artifactId>
             <scope>test</scope>
@@ -73,9 +79,9 @@
             <version>0.2.6</version> <!-- Версия может отличаться, проверь актуальную на https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable -->
         </dependency>
         <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>1.3.2</version> <!-- Версия стабильная и widely used -->
+            <groupId>jakarta.annotation</groupId>
+            <artifactId>jakarta.annotation-api</artifactId>
+            <version>2.1.1</version> <!-- Или последняя совместимая версия -->
         </dependency>
         <!-- Зависимость для JsonNullable, используемая в сгенерированном OpenAPI клиенте -->
         <dependency>
@@ -93,6 +99,35 @@
             <artifactId>annotations</artifactId>
             <version>24.0.0</version> <!-- Or the latest compatible version -->
         </dependency>
+        <!-- Spring Security -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- Spring Security OAuth2 Client -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
+        <!-- (Опционально, но рекомендуется) Для работы с JWT токенами -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.0</version> <!-- Проверьте актуальную версию -->
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -100,6 +135,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.openapitools</groupId>
@@ -116,6 +163,8 @@
                             <apiPackage>com.example.demo.payment.client.api</apiPackage>
                             <modelPackage>com.example.demo.payment.client.model</modelPackage>
                             <configOptions>
+                                <useJakartaEe>true</useJakartaEe>
+
                                 <library>webclient</library>
                                 <generateApiTests>false</generateApiTests>
                                 <generateModelTests>false</generateModelTests>

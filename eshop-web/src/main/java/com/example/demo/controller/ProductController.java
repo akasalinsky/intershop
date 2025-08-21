@@ -1,14 +1,12 @@
 package com.example.demo.controller;
 
-import com.example.demo.model.Cart;
-import com.example.demo.model.CartItem;
-import com.example.demo.model.PageInfo;
-import com.example.demo.model.Product;
+import com.example.demo.model.*;
 import com.example.demo.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
@@ -50,6 +48,7 @@ public class ProductController {
 
                     PageInfo paging = new PageInfo(validatedSize, validatedPage, totalPages, (long) totalProducts);
 
+                    // Логика работы с корзиной для отображения количества товаров
                     Cart cart = session.getAttributeOrDefault("cart", new Cart());
                     if (!(cart instanceof Cart)) {
                         cart = new Cart();
@@ -57,10 +56,8 @@ public class ProductController {
                     }
 
                     Map<Long, Integer> cartItemQuantity = new HashMap<>();
-                    if (cart != null) {
-                        for (CartItem item : cart.getItems()) {
-                            cartItemQuantity.put(item.getProduct().getId(), item.getQuantity());
-                        }
+                    for (CartItem item : cart.getItems()) {
+                        cartItemQuantity.put(item.getProduct().getId(), item.getQuantity());
                     }
 
                     model.addAttribute("products", productsOnPage);
@@ -69,5 +66,19 @@ public class ProductController {
 
                     return "main";
                 });
+    }
+
+    @GetMapping("/products/{id}")
+    public Mono<String> viewProduct(@PathVariable Long id, Model model) {
+        return productRepository.findById(id)
+                .flatMap(product -> {
+                    model.addAttribute("product", product);
+                    return Mono.just("product-detail");
+                })
+                .switchIfEmpty(Mono.just("redirect:/products"));
+    }
+    @GetMapping("/login")
+    public String login() {
+        return "login";
     }
 }

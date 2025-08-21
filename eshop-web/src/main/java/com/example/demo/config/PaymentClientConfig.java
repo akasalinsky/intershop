@@ -25,4 +25,12 @@ public class PaymentClientConfig {
         ApiClient apiClient = new ApiClient(paymentWebClient);
         return apiClient;
     }
+
+    @Bean
+    public DefaultApi paymentClient(WebClient paymentWebClient) {
+        // Создаем экземпляр сгенерированного ApiClient, передав ему настроенный WebClient
+        ApiClient apiClient = new ApiClient(paymentWebClient);
+        // Создаем и возвращаем сгенерированный API клиент
+        return new DefaultApi(apiClient);
+    }
 }
